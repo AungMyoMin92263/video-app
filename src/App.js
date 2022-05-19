@@ -1,5 +1,5 @@
 import { React, useState, useEffect } from 'react';
-import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useNavigate, Router } from 'react-router-dom'
 import Home from './Containers/Home';
 import Login from './Containers/Login';
 import { fetchUser, userAccessToken } from './utils/fetchUser';
@@ -28,10 +28,10 @@ const App = () => {
 
 	return (
 
-		<BrowserRouter>
+		<Routes>
 			<Route path="login" element={<Login />}></Route>
-			<Route path="/" element={<Home user={user}/>}></Route>
-		</BrowserRouter>
+			<Route path="/*" element={<Home user={user}/>}></Route>
+		</Routes>
 
 	)
 }

@@ -107,8 +107,9 @@ const Create = () => {
                     videoUrl: videoAsset,
                     description: description,
                 };
+                console.log("data", data)
 
-                await setDoc(doc(firebaseDb, 'videos', `${Date.now()}`))
+                await setDoc(doc(firebaseDb, 'videos', `${Date.now()}`), data)
                 setLoading(false)
                 navigate('/', {replace: true})
             }
@@ -171,11 +172,11 @@ const Create = () => {
                         <MenuList zIndex={101} width={'md'} shadow={'xl'}>
                             {categories && categories.map(data =>
                                 <MenuItem
-                                    key={category.id}
+                                    key={data.id}
                                     _hover={{ bg: 'blackApha.300' }}
                                     fontSize={'20'}
                                     px={4}
-                                    onClick={() => setCategory(category.name)}
+                                    onClick={() => setCategory(data.name)}
                                 >{data.iconSrc}<Text fontFamily={18} ml={4}>{data.name}</Text></MenuItem>
                             )}
 

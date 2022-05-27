@@ -27,6 +27,8 @@ import {
 	MdOpenInFull,
 } from "react-icons/md";
 import logo from "../img/logo.png";
+import screenfull from "screenfull";
+import { FiMinimize2 } from "react-icons/fi"
 const VideoPinDetail = () => {
 	const textColor = useColorModeValue("gray.500", "gray.900");
 
@@ -39,6 +41,7 @@ const VideoPinDetail = () => {
 	const [volume, setVolume] = useState(0.5);
 	const [played, setPlayed] = useState(0);
 	const [seeking, setSeeking] = useState(false);
+	const [isFull, setIsFull] = useState(false)
 
 	const format = (seconds) => {
 		if (isNaN(seconds)) return "00:00";
@@ -48,14 +51,15 @@ const VideoPinDetail = () => {
 		const mm = date.getUTCMinutes();
 		const ss = date.getUTCSeconds();
 
-		if(hh){
+		if (hh) {
 			return `${hh}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
-		}else{
+		} else {
 			return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
 		}
 	};
 	// custom ref
 	const playerRef = useRef();
+	const playerContainerRef = useRef()
 
 	useEffect(() => {
 		if (videoId) {
@@ -69,7 +73,7 @@ const VideoPinDetail = () => {
 	}, [videoId]);
 
 	useEffect(() => {
-		return () => {};
+		return () => { };
 	}, [muted, volume]);
 
 	const onvolumechange = (e) => {
@@ -105,6 +109,11 @@ const VideoPinDetail = () => {
 		playerRef.current.seekTo(e / 100);
 	};
 
+	const handleFullScreen = () => {
+		screenfull.toggle(playerContainerRef.current)
+		setIsFull(!isFull)
+	}
+
 	const currentTime = playerRef.current
 		? playerRef.current.getCurrentTime()
 		: "00:00";
@@ -136,7 +145,7 @@ const VideoPinDetail = () => {
 			{/* Main Grid for video */}
 			<Grid templateColumns={"repeat(3, 1fr)"} gap={2} width={"100%"}>
 				<GridItem width={"100%"} p={2} colSpan={2}>
-					<Flex width={"full"} bg='black' position={"relative"}>
+					<Flex width={"full"} bg='black' position={"relative"} ref={playerContainerRef}>
 						<ReactPlayer
 							ref={playerRef}
 							url={video?.videoUrl}
@@ -160,7 +169,7 @@ const VideoPinDetail = () => {
 							alignItems={"center"}
 							zIndex={10}
 							cursor={"pointer"}
-							// onClick={() => { setIsPlaying(!isPlaying) }}
+						// onClick={() => { setIsPlaying(!isPlaying) }}
 						>
 							{/* play Icon */}
 							<Flex
@@ -184,7 +193,7 @@ const VideoPinDetail = () => {
 								justifyContent={"flex-end"}
 								alignItems={"center"}
 								zIndex={110}
-								// cursor={'pointer'}
+							// cursor={'pointer'}
 							>
 								<Flex
 									width={"100%"}
@@ -294,12 +303,17 @@ const VideoPinDetail = () => {
 											</Text>
 										</Flex>
 										<Image src={logo} width={"120px"} ml={"auto"} />
-										<MdOpenInFull
+										{!isFull ? <MdOpenInFull
 											fontSize={30}
 											color={"#f1f1f1"}
 											cursor='pointer'
-											onClick={() => {}}
-										/>
+											onClick={handleFullScreen} 
+										/> :
+											<FiMinimize2 fontSize={30}
+												color={"#f1f1f1"}
+												cursor='pointer'
+												onClick={handleFullScreen}  />}
+
 									</Flex>
 								</Flex>
 							</Flex>

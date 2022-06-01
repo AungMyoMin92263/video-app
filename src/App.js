@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, useNavigate, Router } from 'react-router-
 import Home from './Containers/Home';
 import Login from './Containers/Login';
 import { fetchUser, userAccessToken } from './utils/fetchUser';
+import { getNextKey } from './firebase-config';
 
 
 
@@ -21,6 +22,8 @@ const App = () => {
 			const [userInfo] = fetchUser();
 			setUser(userInfo)
 		}
+
+		getNextKey()
 
 	}, [])
 

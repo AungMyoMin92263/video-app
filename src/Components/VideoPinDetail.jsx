@@ -10,15 +10,26 @@ import {
 	Text,
 	useColorModeValue,
 	Image,
+	Popover,
+	PopoverTrigger,
+	PopoverContent,
+	PopoverArrow,
+	PopoverCloseButton,
+	PopoverHeader,
+	PopoverBody,
+	useColorMode,
+	Button,
 } from "@chakra-ui/react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { IoHome, IoPause, IoPlay } from "react-icons/io5";
-import { getfetchVideoDetail } from "../utils/fetchData";
+import { IoHome, IoPause, IoPlay, IoTrash } from "react-icons/io5";
+import { FcApproval } from "react-icons/fc";
+import { getfetchVideoDetail, getUserInfo } from "../utils/fetchData";
 import Spinner from "../Components/Spinner";
 import { getFirestore } from "firebase/firestore";
 import firebaseApp from "../firebase-config";
 import ReactPlayer from "react-player";
+import moment from "moment";
 import {
 	MdOutlineReplay10,
 	MdForward10,
@@ -28,10 +39,12 @@ import {
 } from "react-icons/md";
 import logo from "../img/logo.png";
 import screenfull from "screenfull";
-import { FiMinimize2 } from "react-icons/fi"
+import { FiMinimize2 } from "react-icons/fi";
+import HTMLReactParser from "html-react-parser";
+import { fetchUser } from "../utils/fetchUser";
 const VideoPinDetail = () => {
 	const textColor = useColorModeValue("gray.500", "gray.900");
-
+	const [localUser] = fetchUser();
 	const firestoreDb = getFirestore(firebaseApp);
 	const [loading, setLoading] = useState(false);
 	const [video, setVideo] = useState(null);
@@ -41,7 +54,8 @@ const VideoPinDetail = () => {
 	const [volume, setVolume] = useState(0.5);
 	const [played, setPlayed] = useState(0);
 	const [seeking, setSeeking] = useState(false);
-	const [isFull, setIsFull] = useState(false)
+	const [isFull, setIsFull] = useState(false);
+	const [userInfo, setUserInfo] = useState(null);
 
 	const format = (seconds) => {
 		if (isNaN(seconds)) return "00:00";
@@ -52,28 +66,36 @@ const VideoPinDetail = () => {
 		const ss = date.getUTCSeconds();
 
 		if (hh) {
-			return `${hh}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
+			return `${hh}:${mm.toString().padStart(2, "0")}:${ss
+				.toString()
+				.padStart(2, "0")}`;
 		} else {
-			return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`
+			return `${mm.toString().padStart(2, "0")}:${ss
+				.toString()
+				.padStart(2, "0")}`;
 		}
 	};
 	// custom ref
 	const playerRef = useRef();
-	const playerContainerRef = useRef()
-
+	const playerContainerRef = useRef();
+	const { colorMode, toggleColorMode } = useColorMode();
 	useEffect(() => {
 		if (videoId) {
 			setLoading(true);
 			getfetchVideoDetail(firestoreDb, videoId).then((data) => {
 				console.log(data);
 				setVideo(data);
+				getUserInfo(firestoreDb, data.userId).then((user) => {
+					setUserInfo(user);
+					console.log(userInfo);
+				});
 				setLoading(false);
 			});
 		}
 	}, [videoId]);
 
 	useEffect(() => {
-		return () => { };
+		return () => {};
 	}, [muted, volume]);
 
 	const onvolumechange = (e) => {
@@ -110,9 +132,9 @@ const VideoPinDetail = () => {
 	};
 
 	const handleFullScreen = () => {
-		screenfull.toggle(playerContainerRef.current)
-		setIsFull(!isFull)
-	}
+		screenfull.toggle(playerContainerRef.current);
+		setIsFull(!isFull);
+	};
 
 	const currentTime = playerRef.current
 		? playerRef.current.getCurrentTime()
@@ -145,7 +167,12 @@ const VideoPinDetail = () => {
 			{/* Main Grid for video */}
 			<Grid templateColumns={"repeat(3, 1fr)"} gap={2} width={"100%"}>
 				<GridItem width={"100%"} p={2} colSpan={2}>
-					<Flex width={"full"} bg='black' position={"relative"} ref={playerContainerRef}>
+					<Flex
+						width={"full"}
+						bg='black'
+						position={"relative"}
+						ref={playerContainerRef}
+					>
 						<ReactPlayer
 							ref={playerRef}
 							url={video?.videoUrl}
@@ -169,7 +196,7 @@ const VideoPinDetail = () => {
 							alignItems={"center"}
 							zIndex={10}
 							cursor={"pointer"}
-						// onClick={() => { setIsPlaying(!isPlaying) }}
+							// onClick={() => { setIsPlaying(!isPlaying) }}
 						>
 							{/* play Icon */}
 							<Flex
@@ -193,7 +220,7 @@ const VideoPinDetail = () => {
 								justifyContent={"flex-end"}
 								alignItems={"center"}
 								zIndex={110}
-							// cursor={'pointer'}
+								// cursor={'pointer'}
 							>
 								<Flex
 									width={"100%"}
@@ -303,24 +330,93 @@ const VideoPinDetail = () => {
 											</Text>
 										</Flex>
 										<Image src={logo} width={"120px"} ml={"auto"} />
-										{!isFull ? <MdOpenInFull
-											fontSize={30}
-											color={"#f1f1f1"}
-											cursor='pointer'
-											onClick={handleFullScreen} 
-										/> :
-											<FiMinimize2 fontSize={30}
+										{!isFull ? (
+											<MdOpenInFull
+												fontSize={30}
 												color={"#f1f1f1"}
 												cursor='pointer'
-												onClick={handleFullScreen}  />}
-
+												onClick={handleFullScreen}
+											/>
+										) : (
+											<FiMinimize2
+												fontSize={30}
+												color={"#f1f1f1"}
+												cursor='pointer'
+												onClick={handleFullScreen}
+											/>
+										)}
 									</Flex>
 								</Flex>
 							</Flex>
 						</Flex>
 					</Flex>
+					{/* Video Descrption */}
+					{video?.description && (
+						<Flex my={6} direction={"column"}>
+							<Text my={2} fontSize={"25"} fontWeight={"semibold"}>
+								Description
+							</Text>
+							{HTMLReactParser(video?.description)}
+						</Flex>
+					)}
 				</GridItem>
-				<GridItem width={"100%"} p={2} colSpan></GridItem>
+				<GridItem width={"100%"} p={2} colSpan>
+					{userInfo && (
+						<Flex direction={"column"} width={"full"}>
+							<Flex alignItems={"center"} width={"full"}>
+								<Image
+									src={userInfo?.photoURL}
+									width={"60px"}
+									height={"60px"}
+									rounded={"full"}
+									minHeight={"60px"}
+									minWidth={"60px"}
+								/>
+								<Flex direction={"column"} ml={3}>
+									<Flex alignItems={"center"}>
+										<Text isTruncated color={textColor} fontWeight='semibold'>
+											{userInfo?.displayName}
+										</Text>
+										<FcApproval />
+									</Flex>
+									{video?.id && (
+										<Text fontSize={12}>
+											{moment(
+												new Date(parseInt(video.id)).toISOString()
+											).fromNow()}
+										</Text>
+									)}
+								</Flex>
+							</Flex>
+							{/* Action buttons */}
+							<Flex justifyContent={"space-around"} mt={6}>
+								{userInfo?.uid === localUser?.uid && (
+									<Popover>
+										<PopoverTrigger>
+											<Button colorScheme={"red"} >
+												<IoTrash
+													fontSize={20}
+													color={`${
+														colorMode === "dark" ? "#f1f1f1" : "#111"
+													} `}
+													cursor={"pointer"}
+												/>
+											</Button>
+										</PopoverTrigger>
+										<PopoverContent>
+											<PopoverArrow />
+											<PopoverCloseButton />
+											<PopoverHeader>Confirmation!</PopoverHeader>
+											<PopoverBody>
+												Are you sure you want to have that milkshake?
+											</PopoverBody>
+										</PopoverContent>
+									</Popover>
+								)}
+							</Flex>
+						</Flex>
+					)}
+				</GridItem>
 			</Grid>
 		</Flex>
 	);
